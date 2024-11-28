@@ -79,7 +79,7 @@ def graficar_metodos(funcion, metodo, a, b, n):
     plt.ylabel("f(x)")
     plt.legend()
     plt.grid(True)
-    st.pyplot(plt)
+    st.pyplot(plt)  # Usar st.pyplot para mostrar el gráfico en Streamlit
 
 # Interfaz interactiva de Streamlit
 def main():
