@@ -2,7 +2,7 @@ import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.interpolate import CubicSpline, lagrange, interp1d
-from scipy.interpolate import BarycentricInterpolator
+from scipy.interpolate import BarycentricInterpolator, CubicHermiteSpline
 
 # Funciones a utilizar
 def f1(x):
@@ -25,8 +25,8 @@ st.write("Selecciona una función, el número de puntos y el método de interpol
 funciones = ['Seno', 'Coseno', 'Tangente', 'Exponencial']
 funcion_seleccionada = st.selectbox("Selecciona una función", funciones)
 
-# Entrada para el número de puntos
-n_puntos = st.slider("Selecciona el número de puntos", min_value=5, max_value=50, value=10)
+# Número de puntos fijo
+n_puntos = 10
 
 # Definir la función seleccionada
 if funcion_seleccionada == 'Seno':
@@ -43,7 +43,7 @@ x = np.linspace(0, 10, n_puntos)
 y = f(x)
 
 # Selección del método de interpolación
-metodo = st.selectbox("Selecciona el método de interpolación", ["Lineal", "SplineCubic", "Lagrange", "Barycentric", "Hermite"])
+metodo = st.selectbox("Selecciona el método de interpolación", ["Lineal", "SplineCubic", "Lagrange", "Barycentric", "Hermite", "CubicHermite"])
 
 # Crear los puntos de interpolación (más finos para graficar)
 x_fino = np.linspace(0, 10, 1000)
@@ -74,9 +74,19 @@ elif metodo == "Hermite":
     interpolador = CubicSpline(x, y, bc_type='natural', extrapolate=True)
     y_interpolado = interpolador(x_fino)
 
-# Gráfico de los puntos originales y la interpolación
-fig, ax = plt.subplots()
+elif metodo == "CubicHermite":
+    # Para CubicHermite necesitamos tanto los valores de la función como las derivadas
+    def derivada(x, y):
+        return np.gradient(y, x)
+    
+    dy = derivada(x, y)
+    interpolador = CubicHermiteSpline(x, y, dy)
+    y_interpolado = interpolador(x_fino)
+
+# Gráfico de los puntos originales, la función original y la interpolación
+fig, ax = plt.subplots(figsize=(8, 6))
 ax.plot(x, y, 'ro', label='Puntos Originales')
+ax.plot(x_fino, f(x_fino), label=f'Función Real: {funcion_seleccionada}')
 ax.plot(x_fino, y_interpolado, label=f'Interpolación {metodo}')
 ax.set_title(f'Interpolación con {metodo}')
 ax.set_xlabel('x')
@@ -86,9 +96,17 @@ ax.legend()
 # Mostrar el gráfico
 st.pyplot(fig)
 
-# Calcular el error (si la función es continua y conocida, podemos usarla para calcular el error)
+# Calcular el error (comparando la función real y la interpolada)
 y_real = f(x_fino)
 error = np.abs(y_real - y_interpolado)
 
-# Mostrar el error
-st.write(f"Error máximo de la interpolación: {np.max(error):.4f}")
+# Gráfico de error
+fig_error, ax_error = plt.subplots(figsize=(8, 6))
+ax_error.plot(x_fino, error, label='Error de la Interpolación', color='purple')
+ax_error.set_title('Gráfico de Error de la Interpolación')
+ax_error.set_xlabel('x')
+ax_error.set_ylabel('Error')
+ax_error.legend()
+
+# Mostrar el gráfico de error
+st.pyplot(fig_error)
