@@ -15,7 +15,7 @@ def f3(x):
     return np.tan(x)
 
 def f4(x):
-    return 1/np.exp(x)
+    return np.exp(x)
 
 # Configuración inicial
 st.title("Interpolación de Funciones")
@@ -47,7 +47,7 @@ x = np.linspace(rango_min, rango_max, n_puntos)
 y = f(x)
 
 # Selección del método de interpolación
-metodo = st.selectbox("Selecciona el método de interpolación", ["Lineal", "SplineCubic", "Lagrange", "Barycentric", "Hermite", "CubicHermite"])
+metodo = st.selectbox("Selecciona el método de interpolación", ["Lineal", "SplineCubic", "Lagrange", "Barycentric", "CubicHermite"])
 
 # Crear los puntos de interpolación (más finos para graficar)
 x_fino = np.linspace(rango_min, rango_max, 1000)
@@ -67,15 +67,6 @@ elif metodo == "Lagrange":
 
 elif metodo == "Barycentric":
     interpolador = BarycentricInterpolator(x, y)
-    y_interpolado = interpolador(x_fino)
-
-elif metodo == "Hermite":
-    # Para Hermite necesitamos derivadas, las calcularemos con las diferencias finitas
-    def derivada(x, y):
-        return np.gradient(y, x)
-    
-    dy = derivada(x, y)
-    interpolador = CubicSpline(x, y, bc_type='natural', extrapolate=True)
     y_interpolado = interpolador(x_fino)
 
 elif metodo == "CubicHermite":
