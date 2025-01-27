@@ -19,14 +19,18 @@ def f4(x):
 
 # Configuración inicial
 st.title("Interpolación de Funciones")
-st.write("Selecciona una función, el número de puntos y el método de interpolación.")
+st.write("Selecciona una función, el rango, el número de puntos y el método de interpolación.")
 
 # Slider para seleccionar la función
 funciones = ['Seno', 'Coseno', 'Tangente', 'Exponencial']
 funcion_seleccionada = st.selectbox("Selecciona una función", funciones)
 
-# Número de puntos fijo
-n_puntos = 10
+# Slider para seleccionar el rango de la función
+rango_min = st.slider("Selecciona el valor mínimo de x", min_value=0, max_value=20, value=0)
+rango_max = st.slider("Selecciona el valor máximo de x", min_value=1, max_value=20, value=10)
+
+# Slider para seleccionar el número de puntos
+n_puntos = st.slider("Selecciona el número de puntos", min_value=3, max_value=20, value=10)
 
 # Definir la función seleccionada
 if funcion_seleccionada == 'Seno':
@@ -38,15 +42,15 @@ elif funcion_seleccionada == 'Tangente':
 else:
     f = f4
 
-# Generar los puntos en x
-x = np.linspace(0, 10, n_puntos)
+# Generar los puntos en x según el rango y el número de puntos seleccionados
+x = np.linspace(rango_min, rango_max, n_puntos)
 y = f(x)
 
 # Selección del método de interpolación
 metodo = st.selectbox("Selecciona el método de interpolación", ["Lineal", "SplineCubic", "Lagrange", "Barycentric", "Hermite", "CubicHermite"])
 
 # Crear los puntos de interpolación (más finos para graficar)
-x_fino = np.linspace(0, 10, 1000)
+x_fino = np.linspace(rango_min, rango_max, 1000)
 
 # Interpolación dependiendo del método seleccionado
 if metodo == "Lineal":
