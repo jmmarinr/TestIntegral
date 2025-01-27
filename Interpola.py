@@ -15,7 +15,7 @@ def f3(x):
     return np.tan(x)
 
 def f4(x):
-    return np.exp(x)
+    return 1/np.exp(x)
 
 # Configuración inicial
 st.title("Interpolación de Funciones")
