@@ -250,71 +250,109 @@ def fixed_point(f, g, x0, tol=1e-6, max_iter=100):
 
 def secant(f, x0, x1, tol=1e-6, max_iter=100):
     iterations = []
-    x_values = [x0, x1]
-    f_values = [f(x0), f(x1)]
-    error_values = [float('inf')]
+    x_prev = x0
+    x_curr = x1
+    f_prev = f(x_prev)
+    f_curr = f(x_curr)
+    
+    x_values_prev = []
+    x_values_curr = []
+    x_values_next = []
+    f_values_next = []
+    error_values = []
     
     for i in range(max_iter):
-        if abs(f_values[-1] - f_values[-2]) < 1e-10:  # Avoid division by near-zero
+        # Verificar si la diferencia entre f_curr y f_prev es demasiado pequeña
+        if abs(f_curr - f_prev) < 1e-10:
             st.warning("Método de la secante: División por un número cercano a cero.")
             break
-            
-        x_new = x_values[-1] - f_values[-1] * (x_values[-1] - x_values[-2]) / (f_values[-1] - f_values[-2])
-        x_values.append(x_new)
-        f_values.append(f(x_new))
         
-        error = abs(x_new - x_values[-2])
-        error_values.append(error)
+        # Calcular el siguiente valor de x usando el método de la secante
+        x_next = x_curr - f_curr * (x_curr - x_prev) / (f_curr - f_prev)
+        f_next = f(x_next)
+        
+        # Calcular el error
+        error = abs(x_next - x_curr)
+        
+        # Guardar valores para la visualización
         iterations.append(i)
+        x_values_prev.append(x_prev)
+        x_values_curr.append(x_curr)
+        x_values_next.append(x_next)
+        f_values_next.append(f_next)
+        error_values.append(error)
         
+        # Verificar convergencia
         if error < tol:
             break
+        
+        # Actualizar valores para la siguiente iteración
+        x_prev = x_curr
+        x_curr = x_next
+        f_prev = f_curr
+        f_curr = f_next
     
     results = pd.DataFrame({
         'Iteración': iterations,
-        'x_n-1': x_values[:-2],  # Skip the two most recent values
-        'x_n': x_values[1:-1],  # Skip the first and last values
-        'x_n+1': x_values[2:],  # Skip the first two values
-        'f(x_n+1)': f_values[2:],  # Skip the first two values
+        'x_n-1': x_values_prev,
+        'x_n': x_values_curr,
+        'x_n+1': x_values_next,
+        'f(x_n+1)': f_values_next,
         'Error': error_values
     })
     
-    return x_values[-1], results
+    return x_next, results
 
 def newton_raphson(f, df, x0, tol=1e-6, max_iter=100):
     iterations = []
-    x_values = [x0]
-    f_values = [f(x0)]
-    df_values = [df(x0)]
-    error_values = [float('inf')]
+    x_curr = x0
+    
+    x_values = []
+    f_values = []
+    df_values = []
+    x_next_values = []
+    error_values = []
     
     for i in range(max_iter):
-        if abs(df_values[-1]) < 1e-10:  # Avoid division by near-zero
+        f_curr = f(x_curr)
+        df_curr = df(x_curr)
+        
+        # Verificar si la derivada es cercana a cero
+        if abs(df_curr) < 1e-10:
             st.warning("Método de Newton-Raphson: Derivada cercana a cero.")
             break
-            
-        x_new = x_values[-1] - f_values[-1] / df_values[-1]
-        x_values.append(x_new)
-        f_values.append(f(x_new))
-        df_values.append(df(x_new))
         
-        error = abs(x_new - x_values[-2])
-        error_values.append(error)
+        # Calcular el siguiente valor usando el método de Newton-Raphson
+        x_next = x_curr - f_curr / df_curr
+        
+        # Calcular el error
+        error = abs(x_next - x_curr)
+        
+        # Guardar valores para la visualización
         iterations.append(i)
+        x_values.append(x_curr)
+        f_values.append(f_curr)
+        df_values.append(df_curr)
+        x_next_values.append(x_next)
+        error_values.append(error)
         
+        # Verificar convergencia
         if error < tol:
             break
+        
+        # Actualizar para la siguiente iteración
+        x_curr = x_next
     
     results = pd.DataFrame({
         'Iteración': iterations,
-        'x_n': x_values[:-1],  # Skip the latest value
-        'f(x_n)': f_values[:-1],  # Skip the latest value
-        'f\'(x_n)': df_values[:-1],  # Skip the latest value
-        'x_n+1': x_values[1:],  # Skip the first value
+        'x_n': x_values,
+        'f(x_n)': f_values,
+        'f\'(x_n)': df_values,
+        'x_n+1': x_next_values,
         'Error': error_values
     })
     
-    return x_values[-1], results
+    return x_curr, results
 
 # Definir la función para graficar el método y la función
 def plot_function_and_iterations(f, method_name, results, root, x_range=None):
@@ -364,33 +402,55 @@ def plot_function_and_iterations(f, method_name, results, root, x_range=None):
             plt.plot([x, x], [0, f(x)], 'y--', alpha=0.3)
     
     elif method_name == "Secante":
-        x_n_values = results['x_n'].tolist()
-        x_n_plus_1_values = results['x_n+1'].tolist()
-        
-        for i, (x_n, x_n_plus_1) in enumerate(zip(x_n_values, x_n_plus_1_values)):
-            if i == 0:
-                plt.plot([x_n, x_n_plus_1], [f(x_n), f(x_n_plus_1)], 'ro-', label='Puntos iniciales')
-            elif i == len(x_n_values) - 1:
-                plt.plot([x_n, x_n_plus_1], [f(x_n), f(x_n_plus_1)], 'go-', label='Puntos finales')
-            else:
-                plt.plot([x_n, x_n_plus_1], [f(x_n), f(x_n_plus_1)], 'yo-', alpha=0.3)
+        # Extraer valores directamente de las columnas para evitar problemas con listas
+        try:
+            for i in range(len(results)):
+                x_n = results['x_n'].iloc[i]
+                x_n_plus_1 = results['x_n+1'].iloc[i]
+                
+                if i == 0:
+                    plt.plot([x_n, x_n_plus_1], [f(x_n), f(x_n_plus_1)], 'ro-', label='Puntos iniciales')
+                elif i == len(results) - 1:
+                    plt.plot([x_n, x_n_plus_1], [f(x_n), f(x_n_plus_1)], 'go-', label='Puntos finales')
+                else:
+                    plt.plot([x_n, x_n_plus_1], [f(x_n), f(x_n_plus_1)], 'yo-', alpha=0.3)
+                
+                # Marcar puntos de intersección con el eje x
+                plt.plot([x_n_plus_1], [0], 'mo', markersize=6)
+        except Exception as e:
+            st.warning(f"No se pudieron graficar todas las iteraciones del método de la Secante: {e}")
     
     elif method_name == "Newton-Raphson":
-        x_n_values = results['x_n'].tolist()
-        
-        for i, x_n in enumerate(x_n_values):
-            if i == 0:
-                plt.plot(x_n, f(x_n), 'ro', label='Punto inicial')
-            elif i == len(x_n_values) - 1:
-                plt.plot(x_n, f(x_n), 'go', label='Punto final')
-            else:
-                plt.plot(x_n, f(x_n), 'yo', alpha=0.5)
-            
-            # Graficar la tangente
-            x_tangent = np.linspace(x_n - 1, x_n + 1, 100)
-            df_x_n = results['f\'(x_n)'].iloc[i]
-            y_tangent = f(x_n) + df_x_n * (x_tangent - x_n)
-            plt.plot(x_tangent, y_tangent, 'r--', alpha=0.3)
+        try:
+            for i in range(len(results)):
+                x_n = results['x_n'].iloc[i]
+                x_n_plus_1 = results['x_n+1'].iloc[i]
+                
+                if i == 0:
+                    plt.plot(x_n, f(x_n), 'ro', label='Punto inicial')
+                elif i == len(results) - 1:
+                    plt.plot(x_n, f(x_n), 'go', label='Punto final')
+                else:
+                    plt.plot(x_n, f(x_n), 'yo', alpha=0.5)
+                
+                # Graficar punto en el eje x
+                plt.plot([x_n_plus_1], [0], 'mo', markersize=6)
+                
+                # Graficar la tangente si la derivada está disponible
+                try:
+                    df_x_n = results['f\'(x_n)'].iloc[i]
+                    # Limitar el rango para que la tangente no domine la gráfica
+                    x_range_local = min(2, abs(x_n_plus_1 - x_n) * 5)
+                    x_tangent = np.linspace(x_n - x_range_local, x_n + x_range_local, 100)
+                    y_tangent = f(x_n) + df_x_n * (x_tangent - x_n)
+                    plt.plot(x_tangent, y_tangent, 'r--', alpha=0.3)
+                    
+                    # Línea vertical desde punto hasta intersección con eje x
+                    plt.plot([x_n, x_n], [0, f(x_n)], 'm--', alpha=0.3)
+                except Exception:
+                    pass
+        except Exception as e:
+            st.warning(f"No se pudieron graficar todas las iteraciones del método de Newton-Raphson: {e}")
     
     # Graficar la raíz encontrada
     plt.plot(root, 0, 'g*', markersize=12, label=f'Raíz: x ≈ {root:.8f}')
